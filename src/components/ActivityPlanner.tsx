@@ -7,11 +7,14 @@ import {
   X,
   Loader2,
   ChevronRight,
+  Hash,
+  Landmark,
+  Navigation,
 } from 'lucide-react';
 import { ALL_ACTIVITIES } from '../engine/activityRegistry';
-import { GeocodingService } from '../services/geocodingService';
+import { LocationService } from '../services/locationService';
 import type { ActivityId, ActivityPlanContext } from '../types/activity';
-import type { GeocodingLocation } from '../types/weather';
+import type { NormalizedLocation } from '../types/weather';
 import { IconRenderer } from './IconRenderer';
 
 interface ActivityPlannerProps {
@@ -29,22 +32,24 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
     initialPlan?.activityId || 'outdoor_sports'
   );
   const [searchQuery, setSearchQuery] = useState(initialPlan?.locationName || 'Chennai');
-  const [selectedLocation, setSelectedLocation] = useState<GeocodingLocation | null>(
+  const [selectedLocation, setSelectedLocation] = useState<NormalizedLocation | null>(
     initialPlan
       ? {
-          id: 12345,
+          id: 'initial_loc',
           name: initialPlan.locationName.split(',')[0],
+          formattedAddress: initialPlan.locationName,
           latitude: initialPlan.latitude,
           longitude: initialPlan.longitude,
           timezone: initialPlan.timezone,
-          country: 'India',
+          source: 'open-meteo',
         }
       : null
   );
 
-  const [searchResults, setSearchResults] = useState<GeocodingLocation[]>([]);
+  const [searchResults, setSearchResults] = useState<NormalizedLocation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const [searchError, setSearchError] = useState<string | null>(null);
 
   const getTodayIso = () => new Date().toISOString().split('T')[0];
@@ -61,14 +66,15 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<number | null>(null);
+  const activeSearchSignalRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!selectedLocation && searchQuery) {
-      GeocodingService.searchLocations(searchQuery)
+      LocationService.searchLocations(searchQuery)
         .then((results) => {
           if (results.length > 0) {
             setSelectedLocation(results[0]);
-            setSearchQuery(GeocodingService.formatLocationName(results[0]));
+            setSearchQuery(LocationService.formatLocationName(results[0]));
           }
         })
         .catch(() => {
@@ -83,9 +89,14 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
     setSelectedLocation(null);
     setSearchError(null);
     setValidationError(null);
+    setHighlightedIndex(-1);
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
+    }
+
+    if (activeSearchSignalRef.current) {
+      activeSearchSignalRef.current.abort();
     }
 
     if (value.trim().length < 2) {
@@ -95,28 +106,60 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
     }
 
     setIsSearching(true);
+    const abortController = new AbortController();
+    activeSearchSignalRef.current = abortController;
+
     debounceTimerRef.current = window.setTimeout(async () => {
       try {
-        const results = await GeocodingService.searchLocations(value);
+        const results = await LocationService.searchLocations(value, abortController.signal);
         setSearchResults(results);
-        setShowDropdown(true);
+        setShowDropdown(results.length > 0);
         if (results.length === 0) {
-          setSearchError(`No locations found for "${value}".`);
+          setSearchError(`No locations found for "${value}". Try city, address, landmark, or Plus Code.`);
         }
       } catch (err: any) {
-        setSearchError(err.message || 'Error searching location.');
-        setSearchResults([]);
+        if (err.name !== 'AbortError') {
+          setSearchError(err.message || 'Error searching location.');
+          setSearchResults([]);
+        }
       } finally {
         setIsSearching(false);
       }
-    }, 350);
+    }, 300);
   };
 
-  const handleSelectLocation = (loc: GeocodingLocation) => {
+  const handleSelectLocation = (loc: NormalizedLocation) => {
     setSelectedLocation(loc);
-    setSearchQuery(GeocodingService.formatLocationName(loc));
+    setSearchQuery(LocationService.formatLocationName(loc));
     setShowDropdown(false);
+    setHighlightedIndex(-1);
     setValidationError(null);
+    setSearchError(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown || searchResults.length === 0) {
+      if (e.key === 'ArrowDown' && searchResults.length > 0) {
+        setShowDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % searchResults.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev <= 0 ? searchResults.length - 1 : prev - 1));
+    } else if (e.key === 'Enter') {
+      if (highlightedIndex >= 0 && highlightedIndex < searchResults.length) {
+        e.preventDefault();
+        handleSelectLocation(searchResults[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+      setHighlightedIndex(-1);
+    }
   };
 
   useEffect(() => {
@@ -138,12 +181,13 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
       setSelectedActivity(initialPlan.activityId);
       setSearchQuery(initialPlan.locationName);
       setSelectedLocation({
-        id: 12345,
+        id: 'plan_loc',
         name: initialPlan.locationName.split(',')[0],
+        formattedAddress: initialPlan.locationName,
         latitude: initialPlan.latitude,
         longitude: initialPlan.longitude,
         timezone: initialPlan.timezone,
-        country: '',
+        source: 'open-meteo',
       });
       setDate(initialPlan.date);
       setStartTime(initialPlan.startTime);
@@ -159,17 +203,17 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
       if (searchQuery.trim().length >= 2) {
         setIsSearching(true);
         try {
-          const results = await GeocodingService.searchLocations(searchQuery);
+          const results = await LocationService.searchLocations(searchQuery);
           if (results.length > 0) {
             loc = results[0];
             setSelectedLocation(loc);
-            setSearchQuery(GeocodingService.formatLocationName(loc));
+            setSearchQuery(LocationService.formatLocationName(loc));
           } else {
-            setValidationError(`No location found matching "${searchQuery}". Please check the spelling.`);
+            setValidationError(`No location found matching "${searchQuery}". Please check spelling, enter an address or Plus Code.`);
             return;
           }
         } catch {
-          setValidationError('Geocoding service unavailable. Please check your network connection.');
+          setValidationError('Location service unavailable. Please check your network connection.');
           return;
         } finally {
           setIsSearching(false);
@@ -194,7 +238,7 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
 
     onAnalyze({
       activityId: selectedActivity,
-      locationName: GeocodingService.formatLocationName(loc),
+      locationName: LocationService.formatLocationName(loc),
       latitude: loc.latitude,
       longitude: loc.longitude,
       timezone: loc.timezone || 'auto',
@@ -205,14 +249,28 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
   };
 
   const timePresets = [
-    { label: '6:00 AM (Early)', value: '06:00' },
-    { label: '9:00 AM (Morning)', value: '09:00' },
-    { label: '12:00 PM (Noon)', value: '12:00' },
-    { label: '4:00 PM (Afternoon)', value: '16:00' },
-    { label: '6:00 PM (Evening)', value: '18:00' },
+    { label: '6:00 AM', value: '06:00' },
+    { label: '9:00 AM', value: '09:00' },
+    { label: '12:00 PM', value: '12:00' },
+    { label: '4:00 PM', value: '16:00' },
+    { label: '6:00 PM', value: '18:00' },
   ];
 
   const durationPresets = [0.5, 1, 1.5, 2, 3, 4, 6];
+
+  const renderPlaceIcon = (type?: string) => {
+    switch (type) {
+      case 'plus_code':
+        return <Hash size={14} className="dropdown-pin-icon plus-code-icon" />;
+      case 'landmark':
+      case 'tourist_attraction':
+        return <Landmark size={14} className="dropdown-pin-icon landmark-icon" />;
+      case 'address':
+        return <Navigation size={14} className="dropdown-pin-icon address-icon" />;
+      default:
+        return <MapPin size={14} className="dropdown-pin-icon" />;
+    }
+  };
 
   return (
     <section className="planner-card" id="activity-planner-section" aria-labelledby="planner-title">
@@ -223,7 +281,7 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
         <div>
           <h2 id="planner-title" className="planner-title">Plan an Activity</h2>
           <p className="planner-subtitle">
-            Configure your target activity, geographic coordinates, and time window for full environmental analysis.
+            Configure your target activity, global address or coordinates, and time window for full environmental analysis.
           </p>
         </div>
       </div>
@@ -231,14 +289,14 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
       <form onSubmit={handleSubmit} className="planner-form" noValidate>
         {/* 1. Activity Selection Grid */}
         <div className="form-group">
-          <label className="form-label">
+          <label className="form-label" id="activity-profile-label">
             <span className="label-index">01</span>
             <span className="label-text">Select Activity Profile</span>
           </label>
           <div
             className="activities-grid"
             role="radiogroup"
-            aria-label="Activity Profile Selection"
+            aria-labelledby="activity-profile-label"
           >
             {ALL_ACTIVITIES.map((act) => {
               const isSelected = act.id === selectedActivity;
@@ -266,14 +324,14 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
           </div>
         </div>
 
-        {/* 2. Location Search */}
+        {/* 2. Global Location & Address Search */}
         <div className="form-group" ref={searchContainerRef}>
           <label className="form-label" htmlFor="location-search-input">
             <span className="label-index">02</span>
-            <span className="label-text">Location Coordinates</span>
+            <span className="label-text">Global Location & Address</span>
             {selectedLocation && (
               <span className="coord-badge">
-                {selectedLocation.latitude.toFixed(3)}°N, {selectedLocation.longitude.toFixed(3)}°E ({selectedLocation.timezone})
+                {selectedLocation.latitude.toFixed(3)}°N, {selectedLocation.longitude.toFixed(3)}°E {selectedLocation.timezone ? `(${selectedLocation.timezone})` : ''}
               </span>
             )}
           </label>
@@ -283,13 +341,17 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
               id="location-search-input"
               type="text"
               className="planner-input with-icon"
-              placeholder="Search place name (e.g. Chennai, London, Tokyo)..."
+              placeholder="Search city, address, or paste Google Maps Plus Code (e.g. 37J9+8H Chennai)..."
               value={searchQuery}
               onChange={handleSearchInputChange}
+              onKeyDown={handleKeyDown}
               onFocus={() => {
                 if (searchResults.length > 0) setShowDropdown(true);
               }}
               autoComplete="off"
+              aria-autocomplete="list"
+              aria-controls="location-dropdown"
+              aria-expanded={showDropdown}
             />
             {isSearching && (
               <Loader2 className="search-spinner animate-spin" size={18} />
@@ -302,6 +364,7 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
                   setSearchQuery('');
                   setSelectedLocation(null);
                   setSearchResults([]);
+                  setShowDropdown(false);
                 }}
                 aria-label="Clear location search"
               >
@@ -313,14 +376,15 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
           {/* Location Autocomplete Dropdown */}
           {showDropdown && searchResults.length > 0 && (
             <ul className="search-dropdown-menu" role="listbox" id="location-dropdown">
-              {searchResults.map((loc) => (
+              {searchResults.map((loc, idx) => (
                 <li
                   key={`${loc.id}-${loc.latitude}-${loc.longitude}`}
                   role="option"
-                  aria-selected={selectedLocation?.id === loc.id}
-                  className="dropdown-item"
+                  aria-selected={selectedLocation?.id === loc.id || idx === highlightedIndex}
+                  className={`dropdown-item ${idx === highlightedIndex ? 'highlighted' : ''}`}
                   onClick={() => handleSelectLocation(loc)}
                   tabIndex={0}
+                  onMouseEnter={() => setHighlightedIndex(idx)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
@@ -329,18 +393,25 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
                   }}
                 >
                   <div className="dropdown-item-main">
-                    <MapPin size={15} className="dropdown-pin-icon" />
+                    {renderPlaceIcon(loc.placeType)}
                     <span className="dropdown-item-name">{loc.name}</span>
-                    {loc.admin1 && (
-                      <span className="dropdown-item-admin">{loc.admin1}</span>
+                    {loc.region && (
+                      <span className="dropdown-item-admin">{loc.region}</span>
                     )}
                     {loc.country && (
                       <span className="dropdown-item-country">{loc.country}</span>
                     )}
                   </div>
-                  <span className="dropdown-item-coords">
-                    {loc.latitude.toFixed(2)}°, {loc.longitude.toFixed(2)}°
-                  </span>
+                  <div className="dropdown-item-meta">
+                    {loc.placeType && loc.placeType !== 'general' && loc.placeType !== 'city' && (
+                      <span className={`place-type-badge ${loc.placeType}`}>
+                        {loc.placeType === 'plus_code' ? 'Plus Code' : loc.placeType}
+                      </span>
+                    )}
+                    <span className="dropdown-item-coords">
+                      {loc.latitude.toFixed(2)}°, {loc.longitude.toFixed(2)}°
+                    </span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -353,8 +424,8 @@ export const ActivityPlanner: React.FC<ActivityPlannerProps> = ({
           )}
         </div>
 
-        {/* 3. Date, Time & Duration Matrix */}
-        <div className="planner-time-grid">
+        {/* 3. Date, Time & Duration Configuration */}
+        <div className="planner-controls-grid">
           <div className="form-subgroup">
             <label className="form-label" htmlFor="activity-date-input">
               <span className="label-index">03</span>

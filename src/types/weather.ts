@@ -1,3 +1,19 @@
+export type PlaceType = 'city' | 'town' | 'address' | 'landmark' | 'plus_code' | 'airport' | 'establishment' | 'general';
+
+export interface NormalizedLocation {
+  id: string | number;
+  name: string;
+  formattedAddress: string;
+  latitude: number;
+  longitude: number;
+  city?: string;
+  region?: string;
+  country?: string;
+  timezone?: string;
+  placeType?: PlaceType;
+  source: 'google' | 'open-meteo' | 'plus_code';
+}
+
 export interface GeocodingLocation {
   id: number;
   name: string;
