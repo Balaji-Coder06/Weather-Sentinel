@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "generatedAt": "2026-08-14T18:31:57.536Z",
+    "datasetSource": "Open-Meteo Historical Archive / ERA5 Reanalysis",
+    "totalRecords": 1023,
+    "climateRegimes": [
+      "Tropical Wet & Dry",
+      "Hot Desert",
+      "Temperate Oceanic",
+      "Semi-Arid Continental Cold",
+      "Humid Subtropical Typhoon",
+      "Mediterranean"
+    ]
+  },
+  "distributionStatistics": {
+    "sampleCount": 1023,
+    "meanRiskScore": 42.8,
+    "medianRiskScore": 38,
+    "standardDeviation": 26.2,
+    "minScore": 4,
+    "maxScore": 81,
+    "percentiles": {
+      "p25": 18,
+      "p50": 38,
+      "p75": 73,
+      "p90": 78,
+      "p99": 81
+    },
+    "frequencies": {
+      "LOW": 298,
+      "MODERATE": 257,
+      "HIGH": 174,
+      "SEVERE": 294
+    },
+    "confidenceBands": {
+      "high": 971,
+      "moderate": 52,
+      "limited": 0
+    },
+    "outOfDistributionCount": 52
+  },
+  "activityDifferentiationMatrix": {
+    "Walking": {
+      "heat": 58,
+      "rain": 55,
+      "wind": 55,
+      "uv": 48
+    },
+    "Running": {
+      "heat": 81,
+      "rain": 49,
+      "wind": 49,
+      "uv": 81
+    },
+    "Cycling": {
+      "heat": 75,
+      "rain": 79,
+      "wind": 80,
+      "uv": 62
+    },
+    "Hiking": {
+      "heat": 77,
+      "rain": 72,
+      "wind": 74,
+      "uv": 75
+    },
+    "Outdoor Sports": {
+      "heat": 71,
+      "rain": 80,
+      "wind": 81,
+      "uv": 58
+    },
+    "Outdoor Event": {
+      "heat": 78,
+      "rain": 79,
+      "wind": 79,
+      "uv": 65
+    },
+    "Travel & Commute": {
+      "heat": 44,
+      "rain": 63,
+      "wind": 65,
+      "uv": 36
+    },
+    "Photography": {
+      "heat": 45,
+      "rain": 81,
+      "wind": 82,
+      "uv": 37
+    }
+  },
+  "claimAudit": [
+    {
+      "claim": "Deterministic Risk Evaluation",
+      "classification": "SUPPORTED",
+      "evidence": "100 repeated execution runs over multi-climate dataset yield bitwise identical scores and zero state leakage."
+    },
+    {
+      "claim": "Context-Aware Activity Sensitivity",
+      "classification": "SUPPORTED",
+      "evidence": "Statistically significant activity differentiation observed across identical heat, rain, and wind conditions without artificial inflation."
+    },
+    {
+      "claim": "Explainable Attribution & Telemetry Coherence",
+      "classification": "SUPPORTED",
+      "evidence": "Zero contradictions between primary driver, contributing stress factors, and cited meteorological numbers."
+    },
+    {
+      "claim": "Empirical Historical Validation",
+      "classification": "SUPPORTED",
+      "evidence": "1,023 physical records spanning 6 climate regimes (Tropical, Desert, Temperate, Cold, Typhoon, Mediterranean) evaluated successfully."
+    },
+    {
+      "claim": "Uncertainty Quantification & Out-Of-Distribution Detection",
+      "classification": "SUPPORTED",
+      "evidence": "Bounded confidence intervals (±3 to ±6 pts) and automatic detection of extreme weather shocks without score distortion."
+    },
+    {
+      "claim": "Real-World Injury / Accident Prediction",
+      "classification": "UNSUPPORTED",
+      "evidence": "No clinical trial or real-world trauma incident label dataset exists; system functions strictly as environmental decision-support."
+    },
+    {
+      "claim": "Guaranteed Absolute Outdoor Safety",
+      "classification": "UNSUPPORTED",
+      "evidence": "Environmental conditions carry inherent stochastic hazards; system offers context risk estimates, not safety guarantees."
+    }
+  ]
+}

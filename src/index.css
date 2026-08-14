@@ -1,0 +1,199 @@
+/* ==========================================================================
+   WEATHER SENTINEL — Atmospheric Scientific Design System & Tokens
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root,
+[data-theme="dark"] {
+  /* Color Palette - Dark Atmospheric Surfaces */
+  --bg-deep: #050811;
+  --bg-base: #090e1c;
+  --bg-surface: #0e162c;
+  --bg-card: #131e38;
+  --bg-card-hover: #182747;
+  --bg-input: #0a1122;
+
+  /* Borders & Dividers */
+  --border-subtle: #1c2b4d;
+  --border-medium: #273d6e;
+  --border-accent: #3b5b9e;
+
+  /* Typography Hierarchy - Dark Theme */
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
+  /* Risk Spectrum - Dark Theme */
+  --risk-low: #10b981;
+  --risk-low-bg: rgba(16, 185, 129, 0.14);
+  --risk-low-border: rgba(16, 185, 129, 0.38);
+
+  --risk-mod: #f59e0b;
+  --risk-mod-bg: rgba(245, 158, 11, 0.14);
+  --risk-mod-border: rgba(245, 158, 11, 0.38);
+
+  --risk-high: #f97316;
+  --risk-high-bg: rgba(249, 115, 22, 0.14);
+  --risk-high-border: rgba(249, 115, 22, 0.38);
+
+  --risk-severe: #ef4444;
+  --risk-severe-bg: rgba(239, 68, 68, 0.16);
+  --risk-severe-border: rgba(239, 68, 68, 0.45);
+
+  /* Scientific Telemetry / Cyan Accent */
+  --accent-cyan: #06b6d4;
+  --accent-cyan-bg: rgba(6, 182, 212, 0.14);
+  --accent-cyan-border: rgba(6, 182, 212, 0.38);
+  --accent-primary-gradient: linear-gradient(135deg, #0284c7, #0369a1);
+  --accent-primary-hover: linear-gradient(135deg, #0369a1, #075985);
+
+  /* Elevation Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.6);
+  --shadow-glow-cyan: 0 0 24px rgba(6, 182, 212, 0.2);
+  --shadow-glow-risk: 0 0 28px rgba(239, 68, 68, 0.22);
+
+  /* Atmospheric Orbs */
+  --orb-color-1: rgba(6, 182, 212, 0.12);
+  --orb-color-2: rgba(30, 58, 138, 0.15);
+  --orb-color-3: rgba(16, 185, 129, 0.08);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --theme-transition: background-color 0.35s ease, border-color 0.35s ease, color 0.25s ease, box-shadow 0.35s ease;
+}
+
+[data-theme="light"] {
+  /* Color Palette - Light Atmospheric Daylight */
+  --bg-deep: #f8fafc;
+  --bg-base: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-card: #f8fafc;
+  --bg-card-hover: #f1f5f9;
+  --bg-input: #ffffff;
+
+  /* Borders & Dividers - High Contrast Clean Analytical */
+  --border-subtle: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-accent: #94a3b8;
+
+  /* Typography Hierarchy - Light Theme (Crisp, High Contrast) */
+  --text-primary: #090d16;    /* Deep obsidian-slate for dominant headings and values */
+  --text-secondary: #1e293b;  /* Slate-800 for clear, easily readable body and metrics */
+  --text-muted: #475569;      /* Slate-600 for metadata, perfectly legible */
+  --text-dim: #64748b;        /* Slate-500 for compact telemetry labels */
+
+  /* Risk Spectrum - High-Contrast Daylight Precision */
+  --risk-low: #047857;        /* Deep rich emerald green */
+  --risk-low-bg: rgba(5, 150, 105, 0.12);
+  --risk-low-border: rgba(5, 150, 105, 0.38);
+
+  --risk-mod: #b45309;        /* Deep rich amber */
+  --risk-mod-bg: rgba(217, 119, 6, 0.12);
+  --risk-mod-border: rgba(217, 119, 6, 0.38);
+
+  --risk-high: #c2410c;       /* Deep rich orange */
+  --risk-high-bg: rgba(234, 88, 12, 0.12);
+  --risk-high-border: rgba(234, 88, 12, 0.38);
+
+  --risk-severe: #b91c1c;     /* Deep rich crimson */
+  --risk-severe-bg: rgba(220, 38, 38, 0.14);
+  --risk-severe-border: rgba(220, 38, 38, 0.4);
+
+  /* Scientific / Weather Sentinel Blue Accent */
+  --accent-cyan: #0284c7;     /* Sky-600 precision analytical blue */
+  --accent-cyan-bg: rgba(2, 132, 199, 0.1);
+  --accent-cyan-border: rgba(2, 132, 199, 0.35);
+  --accent-primary-gradient: linear-gradient(135deg, #0284c7, #0369a1);
+  --accent-primary-hover: linear-gradient(135deg, #0369a1, #075985);
+
+  /* Elevation Shadows - Natural Analytical Depth */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.09);
+  --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.12);
+  --shadow-glow-cyan: 0 0 20px rgba(2, 132, 199, 0.15);
+  --shadow-glow-risk: 0 0 24px rgba(220, 38, 38, 0.15);
+
+  /* Atmospheric Orbs - Daylight */
+  --orb-color-1: rgba(2, 132, 199, 0.07);
+  --orb-color-2: rgba(99, 102, 241, 0.06);
+  --orb-color-3: rgba(5, 150, 105, 0.05);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  transition: var(--theme-transition);
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--bg-deep);
+  transition: var(--theme-transition);
+}
+
+/* Accessibility Focus States */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-accent);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
