@@ -7,9 +7,9 @@ Weather Sentinel goes beyond traditional weather apps by turning forecasts into 
 Instead of simply showing temperature, rain, and wind, it considers your **activity, location, duration, time, and environmental conditions** to estimate contextual risk and recommend better activity windows.
 
 <p align="center">
-  <a href="YOUR_NETLIFY_URL">🚀 Live Demo</a>
+  <a href="https://weathersentinel.netlify.app/">🚀 Live Demo</a>
   •
-  <a href="YOUR_GITHUB_REPO_URL">💻 Source Code</a>
+  <a href="https://github.com/Balaji-Coder06/Weather-Sentinel">💻 Source Code</a>
 </p>
 
 ## ✨ Features
